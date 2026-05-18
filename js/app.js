@@ -1,0 +1,7 @@
+function navHTML(active='home'){const u=Store.user();return `<div class="page"><nav class="nav"><a class="logo" href="index.html"><span class="mark"></span><span>VeoStudio AI</span></a><div class="navlinks"><a class="${active==='home'?'active':''}" href="index.html">Home</a><a href="generator.html">Studio</a><a href="dashboard.html">Dashboard</a><a href="affiliate.html">Affiliate</a><a href="admin.html">Admin</a><a href="marketing-kit.html">Marketing</a><a href="reseller.html">Reseller</a>${u?`<a href="#" onclick="Store.logout()">Logout</a>`:`<a class="active" href="login.html">Sign in</a>`}</div></nav></div>`}
+function mountNav(active){document.getElementById('navMount').innerHTML=navHTML(active)}
+function requireUser(){const u=Store.user();if(!u){location.href='login.html';return null}return u}
+function getRef(){return new URLSearchParams(location.search).get('ref')||localStorage.getItem('VEO_REF')||''}
+document.addEventListener('DOMContentLoaded',async()=>{const ref=new URLSearchParams(location.search).get('ref');if(ref){localStorage.setItem('VEO_REF',ref);await API.call('trackClick',{ref})}})
+function downloadText(filename,text){const blob=new Blob([text],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href)}
+function exportProjectCard(project){downloadText(`${project.title.replaceAll(' ','-').toLowerCase()}.txt`,JSON.stringify(project,null,2))}
