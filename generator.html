@@ -1,35 +1,209 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>AI Music Video Studio</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;650;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><script src="js/config.js"></script><script src="js/api.js"></script><script src="js/app.js"></script></head><body><div id="navMount"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI Music Video Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;650;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/engine.js"></script>
+</head>
+<body>
+<div id="navMount"></div>
+
 <div class="page shell">
-  <div class="nav"><a class="logo" href="index.html"><span class="mark"></span><span>AI Music Video Studio</span></a><div class="navlinks"><a href="dashboard.html">Home</a><a href="#" onclick="Store.logout()">Signout</a></div></div>
+  <div class="nav">
+    <a class="logo" href="index.html"><span class="mark"></span><span>AI Music Video Studio</span></a>
+    <div class="navlinks">
+      <a href="dashboard.html">Home</a>
+      <a href="projects.html">Projects</a>
+      <a href="#" onclick="Store.logout()">Signout</a>
+    </div>
+  </div>
+
   <main class="app-layout">
     <section class="panel glass">
       <h2 class="studio-title">Describe Your Video...</h2>
+
       <form class="form" onsubmit="generate(event)">
-        <textarea id="prompt" placeholder="Futuristic cyberpunk city at night" required></textarea>
-        <div class="field"><label>Upload Media</label>
+        <div class="field">
+          <label>Use Sample Prompt</label>
+          <select id="samplePrompt" onchange="applySamplePrompt()">
+            <option value="">Choose a sample prompt...</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Prompt</label>
+          <textarea id="prompt" placeholder="Futuristic cyberpunk city at night" required></textarea>
+        </div>
+
+        <div class="field">
+          <label>Upload Media</label>
           <div class="upload-line"><div class="upload-label">▣ Photos</div><button type="button" class="btn btn-primary btn-small">Upload</button></div>
           <div class="upload-line"><div class="upload-label">▣ Video Clips</div><button type="button" class="btn btn-primary btn-small">Upload</button></div>
           <div class="upload-line"><div class="upload-label">♫ Music Track</div><button type="button" class="btn btn-primary btn-small">Upload</button></div>
         </div>
+
         <div class="preview-box" id="previewVisual"></div>
       </form>
     </section>
+
     <aside class="panel glass">
-      <div class="field"><label>Style</label><select id="style"><option>EDM Festival</option><option>Hip Hop Urban</option><option>Pop Glam</option><option>Cinematic Emotional</option><option>Retro Synthwave</option></select></div>
-      <div class="field"><label>Duration</label><select id="duration"><option>30 Seconds</option><option>60 Seconds</option><option>90 Seconds</option></select></div>
-      <div class="field"><label>Aspect Ratio</label><select id="ratio"><option>9:16 TikTok</option><option>16:9 YouTube</option><option>1:1 Instagram</option></select></div>
+      <div class="field">
+        <label>Style</label>
+        <select id="style">
+          <option>EDM Festival</option>
+          <option>Hip Hop Urban</option>
+          <option>Pop Glam</option>
+          <option>Cinematic Emotional</option>
+          <option>Retro Synthwave</option>
+          <option>AI Lyric Video</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Duration — supports up to 2 hours</label>
+        <select id="durationPreset" onchange="setDurationPreset()">
+          <option value="1">1 Minute</option>
+          <option value="3">3 Minutes</option>
+          <option value="5">5 Minutes</option>
+          <option value="15">15 Minutes</option>
+          <option value="30" selected>30 Minutes</option>
+          <option value="60">1 Hour</option>
+          <option value="90">1.5 Hours</option>
+          <option value="120">2 Hours</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Custom Duration Minutes (1–120)</label>
+        <input id="durationMinutes" type="number" min="1" max="120" value="30">
+      </div>
+
+      <div class="field">
+        <label>Aspect Ratio</label>
+        <select id="ratio">
+          <option>9:16 TikTok</option>
+          <option>16:9 YouTube</option>
+          <option>1:1 Instagram</option>
+        </select>
+      </div>
+
       <button class="btn btn-primary" style="width:100%" onclick="document.querySelector('form').requestSubmit()">Generate Video</button>
+
       <div class="preview-box" style="margin-top:16px"></div>
       <div class="progress"><span></span></div>
       <div class="status">● AI Processing ...</div>
     </aside>
   </main>
 </div>
-<section class="page section"><div class="card"><canvas id="viz" style="width:100%;border-radius:10px"></canvas><div class="actions"><button class="btn btn-dark" onclick="downloadLast()">Download Export TXT</button><button class="btn btn-dark" onclick="downloadViz()">Download Visualizer PNG</button></div><div id="result" class="result" style="margin-top:16px"></div></div></section>
-<script src="js/engine.js"></script><script>
-let lastExport=''; const u=requireUser(); VeoEngine.drawVisualizer(document.getElementById('viz'),'VeoStudio AI');
-async function generate(e){e.preventDefault();const user=requireUser();if(Number(user.credits||0)<=0){alert('No credits left. Upgrade first.');location.href='pricing.html';return}const out=VeoEngine.generate({prompt:prompt.value,style:style.value,ratio:ratio.value,duration:duration.value,intensity:'High'});lastExport=out.exportText;result.textContent=out.exportText;VeoEngine.drawVisualizer(document.getElementById('viz'),out.title);const res=await API.call('saveProject',{email:user.email,title:out.title,data:out});if(res.ok&&res.user){Store.setUser(res.user)}}
-function downloadLast(){if(!lastExport)return alert('Generate first.');downloadText('veostudio-export.txt',lastExport)}
-function downloadViz(){const a=document.createElement('a');a.href=document.getElementById('viz').toDataURL('image/png');a.download='veostudio-visualizer.png';a.click()}
+
+<section class="page section">
+  <div class="card">
+    <canvas id="viz" style="width:100%;border-radius:10px"></canvas>
+    <div class="actions">
+      <button class="btn btn-dark" onclick="downloadLast()">Download Export TXT</button>
+      <button class="btn btn-dark" onclick="downloadViz()">Download Visualizer PNG</button>
+    </div>
+    <div id="result" class="result" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<footer class="footer page">© VeoStudio AI — cinematic AI video SaaS.</footer>
+
+<script>
+mountNav("studio");
+
+let lastExport = "";
+const user = requireUser();
+const promptSelect = document.getElementById("samplePrompt");
+
+window.VEO_CONFIG.SAMPLE_PROMPTS.forEach((item, index) => {
+  const opt = document.createElement("option");
+  opt.value = index;
+  opt.textContent = item.name;
+  promptSelect.appendChild(opt);
+});
+
+function applySamplePrompt(){
+  const value = samplePrompt.value;
+  if(value === "") return;
+  const sample = window.VEO_CONFIG.SAMPLE_PROMPTS[Number(value)];
+  prompt.value = sample.prompt;
+  style.value = sample.name;
+}
+
+function setDurationPreset(){
+  if(durationPreset.value !== "custom"){
+    durationMinutes.value = durationPreset.value;
+  }
+}
+
+VeoEngine.drawVisualizer(document.getElementById("viz"), "VeoStudio AI");
+
+async function generate(e){
+  e.preventDefault();
+
+  const user = requireUser();
+  if(!user) return;
+
+  const selectedMinutes = Math.min(Math.max(Number(durationMinutes.value || 1), 1), 120);
+  const plan = window.VEO_CONFIG.PLANS[user.plan] || window.VEO_CONFIG.PLANS.free;
+  const planMax = Number(plan.maxMinutes || 5);
+
+  if(selectedMinutes > planMax){
+    alert(`Your ${plan.label} plan supports up to ${planMax} minutes. Upgrade for longer videos up to 2 hours.`);
+    location.href = "pricing.html";
+    return;
+  }
+
+  if(Number(user.credits || 0) <= 0){
+    alert("No credits left. Upgrade first.");
+    location.href = "pricing.html";
+    return;
+  }
+
+  const out = VeoEngine.generate({
+    prompt: prompt.value,
+    style: style.value,
+    ratio: ratio.value,
+    minutes: selectedMinutes,
+    intensity: "High Beat Sync"
+  });
+
+  lastExport = out.exportText;
+  result.textContent = out.exportText;
+  VeoEngine.drawVisualizer(document.getElementById("viz"), out.title);
+
+  const res = await API.call("saveProject", {
+    email: user.email,
+    title: out.title,
+    data: out
+  });
+
+  if(res.ok && res.user){
+    Store.setUser(res.user);
+  }
+}
+
+function downloadLast(){
+  if(!lastExport) return alert("Generate first.");
+  downloadText("veostudio-export.txt", lastExport);
+}
+
+function downloadViz(){
+  const a = document.createElement("a");
+  a.href = document.getElementById("viz").toDataURL("image/png");
+  a.download = "veostudio-visualizer.png";
+  a.click();
+}
 </script>
-<footer class="footer page">© VeoStudio AI — cinematic AI video SaaS.</footer><script>mountNav("studio")</script></body></html>
+</body>
+</html>
